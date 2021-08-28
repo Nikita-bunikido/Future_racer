@@ -2,13 +2,23 @@
 #include <windows.h>
 #include <math.h>
 
-#define P       3
+#include "particles.h"
+
+#define P       4
 #define MAX     100000
 #define w       120
 #define h       30
+#define START   {0, 0}
 
 char screen[w * h + 1];
-int car_x = 10, car_y = 1;
+int car_x = 10;
+int car_y = 1;
+
+int game = 1, t;
+
+int Key[4];
+int move = 0;
+int background_x = 0;
 
 struct pict {
     char picture[MAX];
@@ -48,28 +58,38 @@ int open(char *ens[]){
 void draw(struct pict a, int o_x, int o_y){
     for(int px = 0; px < a._x; px++)
         for(int py = 0; py < a._y; py++)
-            if (a.picture[py * a._x + px] != 'a' && (px + o_x) < w && (py + o_y) < h)
+            if (a.picture[py * a._x + px] != 'a' && (px + o_x) < w && (py + o_y) < h && (o_x + px) >= 0 && (o_y + py) > 0)
                 screen[(py + o_y) * w + (px + o_x)] = a.picture[py * a._x + px];
 }
 
 int main(){
-    char *ens[P] = {"res\\car_1.txt", "res\\car_2.txt", "res\\background.txt"};
+    emmiter_x = car_x;
+    emmiter_y = car_y + 5;
+    setup_particles();
+    char *ens[P] = {"res\\car_1.txt", "res\\car_2.txt", "res\\car_3.txt", "res\\background.txt"};
     if (!open(ens))
         printf("error: can't open pictures");
-
+    // Create Screen Buffer
+	HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+	SetConsoleActiveScreenBuffer(hConsole);
+	DWORD dwBytesWritten = 0;
     screen[w * h] = 0;
-    int game = 1, t;
-
-    int Key[4];
-    int move = 0;
 
     while(game){
         memset(screen, 32, w * h * sizeof(char));
         
         // GAME TICK =======================================
+        //Car moving
         move = 0;
-        Sleep(50);
+        //time
         ++t;
+        //moving background
+        background_x -= 2;
+        //Setting emmiter
+        emmiter_x = car_x + 3;
+        emmiter_y = car_y + 6;
+
+        Sleep(50);
 
 
         // USER INPUT ======================================
@@ -88,17 +108,33 @@ int main(){
             move = 1;
         }
 
+        if (background_x <= -p[3]._x)
+            background_x = -1;
+
+        update_particles();
+
         // DRAWING =========================================
-        draw(p[2], 0, 1);
-        draw(p[2], p[2]._x - 1, 1);
+
+        /* Drawing background*/
+        draw(p[3], background_x, 1);
+        draw(p[3], background_x + p[3]._x - 1, 1);
+        draw(p[3], background_x + (p[3]._x * 2) - 1, 1);
+
+        /* Drawing a particles */
+        draw_particles();
+
         /* Drawing a main car*/
-        if (!move)
-            draw(p[0], car_x, car_y);
+        if (!move){
+            if ((cos(t * 0.5)) > 0)
+                draw(p[0], car_x, car_y);
+            else
+                draw(p[2], car_x, car_y);
+        }
         else
             draw(p[1], car_x, car_y + 1);
 
-        
-        printf("%s", screen);
+        COORD start_point = START;
+        WriteConsoleOutputCharacter(hConsole, screen, w * h, start_point, &dwBytesWritten);
     }
     return 0;
 }
