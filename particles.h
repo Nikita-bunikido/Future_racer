@@ -6,7 +6,7 @@
 #define h       30
 
 extern char screen[];
-extern int car_x;
+extern const int car_x;
 extern int car_y;
 
 char state[] = " `.,:;%%#@";
