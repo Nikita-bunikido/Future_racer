@@ -1,4 +1,6 @@
-#define P       6
+#include "header.h"
+
+#define P       7
 #define MAX     100000
 
 struct pict {
@@ -13,7 +15,8 @@ enum ps {
     CAR_2,
     BACKGROUND,
     BARRIER,
-    ROBOT
+    ROBOT,
+    PULE
 };
 
 int open(char *ens[]){

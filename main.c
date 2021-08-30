@@ -1,13 +1,16 @@
 #include <stdio.h>
 #include <windows.h>
 #include <math.h>
+#include <time.h>
 
+#include "header.h"
 #include "particles.h"
 #include "pictures.h"
 #include "barriers.h"
+#include "pule.h"
 
-#define w       120
-#define h       30
+#define DEBUG //for test
+
 #define START   {0, 0}
 #define speed   2
 
@@ -16,6 +19,7 @@
 char screen[w * h + 1];
 const int car_x = 10;
 int car_y = 10;
+int bl;
 
 int game = 1, t;
 
@@ -23,23 +27,22 @@ int Key[4];
 int move = 0;
 int background_x = 0;
 
-int barrier_x;
-int barrier_y;
-
 int main(){
     emmiter_x = car_x + 3;
     emmiter_y = car_y + 6;
-    barrier_y = car_y;
-    barrier_x = 100;
 
     setup_particles();
     barriers_setup();
 
     char *ens[P] = {"res\\car_1.txt", "res\\car_2.txt", "res\\car_3.txt", 
-    "res\\background.txt", "res\\stop.txt", "res\\robot.txt"};
+    "res\\background.txt", "res\\stop.txt", "res\\robot.txt", "res\\pule.txt"};
 
-    if (!open(ens))
+    #ifdef DEBUG
+    if (!open(ens)){
         printf("error: can't open pictures");
+        system("pause");
+    }
+    #endif
 
     // Create Screen Buffer
 	HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
@@ -48,6 +51,7 @@ int main(){
     screen[w * h] = 0;
 
     while(game){
+        srand(time(NULL)+t);
         memset(screen, 32, w * h * sizeof(char));
         
         // GAME TICK =======================================
@@ -57,7 +61,6 @@ int main(){
         ++t;
         //moving background
         background_x -= speed;
-        barrier_x -= speed;
         //Setting emmiter
         emmiter_x = car_x + 3;
         emmiter_y = car_y + 6;
@@ -68,28 +71,33 @@ int main(){
         // USER INPUT ======================================
 
         for(int k = 0; k < 4; ++k)
-            Key[k] = (0x8000 & GetKeyState((unsigned char)"\x25\x26\x27\x28"[k])) != 0;
+            Key[k] = (0x8000 & GetKeyState((unsigned char)"\x26\x28\x20"[k])) != 0;
 
         // GAME LOGIC ======================================
 
-        if (Key[3]){
+        if (Key[1]){
             car_y+= car_y < h - p[CAR_1]._y; //Colision detection with bottom
             move = 1;
         }
-        if (Key[1]){
+        if (Key[0]){
             car_y-= car_y > 10; //Collision detection with top
             move = 1;
+        }
+        if (Key[2]) { //Shooting
+            shoot = 1;
         }
 
         if (background_x <= -p[BACKGROUND]._x) //background move check
             background_x = -1;
-        if (barrier_x < -10){
-            barrier_y = car_y;
-            barrier_x = w;
+
+        if ((bl = collision()) >= 0 && !already_shoot){
+            barriers_vis[bl] = 0;
+            already_shoot = 1;
         }
 
         update_barriers();
         update_particles();
+        pule_update();
 
         // DRAWING =========================================
 
@@ -97,10 +105,6 @@ int main(){
         draw(p[BACKGROUND], background_x, 1);
         draw(p[BACKGROUND], background_x + p[BACKGROUND]._x - 1, 1);
         draw(p[BACKGROUND], background_x + (p[BACKGROUND]._x * 2) - 1, 1);
-
-        /* Drawing robot */
-        draw(p[ROBOT], barrier_x, barrier_y);
-
 
         /* Drawing shadow */
         double px_1, py_1;
@@ -116,6 +120,11 @@ int main(){
         /* Drawing a particles */
         draw_particles();
 
+        /* Drawing barriers */
+        draw_barriers();
+
+        /*Drawing pule */
+        pule_draw();
 
         /* Drawing a main car*/
         if (!move){
@@ -127,8 +136,6 @@ int main(){
         else
             draw(p[CAR_MOVE], car_x, car_y + 1);
 
-        /* Drawing barriers */
-        draw_barriers();
 
         COORD start_point = START;
         WriteConsoleOutputCharacter(hConsole, screen, w * h, start_point, &dwBytesWritten);
