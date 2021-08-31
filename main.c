@@ -16,6 +16,11 @@
 #define speed           2
 #define score_default   "SCORE: "
 #define per_default     "| RESTARTING WEAPON..."
+#define gameover_text   "GAME OVER!"
+#define press           "Press [enter] to contune..."
+
+#define end_w           30
+#define end_h           8
 
 #define shadow_offset   -3
 
@@ -25,13 +30,19 @@ const int car_x = 10;
 int car_y = 10;
 int bl;
 
-int game = 1, t, restart_timer = 0, can_shoot = 1;
+int game = 1;
+int t;
+int restart_timer = 0;
+int can_shoot = 1;
+int score_count = 0;
 
-int Key[4];
+int Key[5];
 int move = 0;
 int background_x = 0;
 
 char score[] = "SCORE: ";
+
+int go = 0;
 
 int main(){
     screen[w * h + 1] = '\0';
@@ -69,32 +80,46 @@ int main(){
         //time
         ++t;
         //moving background
-        background_x -= speed;
+        background_x -= (!go) ? speed : 0;
         //Setting emmiter
         emmiter_x = car_x + 3;
         emmiter_y = car_y + 6;
+        //Score
+        score_count += !go;
 
         Sleep(50);
 
 
         // USER INPUT ======================================
 
-        for(int k = 0; k < 4; ++k)
-            Key[k] = (0x8000 & GetKeyState((unsigned char)"\x26\x28\x20"[k])) != 0;
+        for(int k = 0; k < 5; ++k)
+            Key[k] = (0x8000 & GetKeyState((unsigned char)"\x26\x28\x20\xD\x1B"[k])) != 0;
 
         // GAME LOGIC ======================================
 
-        if (Key[1]){
+        if (Key[1] && !go){
             car_y+= car_y < h - p[CAR_1]._y; //Colision detection with bottom
             move = 1;
         }
-        if (Key[0]){
+        if (Key[0] && !go){
             car_y-= car_y > 10; //Collision detection with top
             move = 1;
         }
-        if (Key[2] && can_shoot) { //Shooting
+        if (Key[2] && can_shoot && !go) { //Shooting
             shoot = 1;
             can_shoot = 0;
+        }
+
+        if (Key[4]){ //escape to exit
+            game = !game;
+        }
+
+        if (Key[3] && go){ //restart
+            go  = t = active = shoot = pule_move = background_x = restart_timer = score_count = move = 0;
+            car_y = 10;
+            barriers_setup();
+            setup_particles();
+            setup_pule_particles();
         }
 
         if (!can_shoot){
@@ -154,19 +179,28 @@ int main(){
         else
             draw(p[CAR_MOVE], car_x, car_y + 1);
 
-        strcpy(score, score_default);
-        char sc[50];
-        itoa(t / 10, sc, 10);
-        strcat(score, sc);
-        print(1, 0, score);
+        if (!go){
+            strcpy(score, score_default);
+            char sc[50];
+            itoa(score_count / 10, sc, 10);
+            strcat(score, sc);
+            print(1, 0, score); //print score
+        }
 
         if (!can_shoot)
             print(11, 0, per_default);
 
 
-        if (game_over()){
-            Sleep(5000);
-            exit(0);
+        if (game_over())
+            go = 1;
+
+        if (go){
+            for(int px = w / 2 - end_w / 2; px <  w / 2 - end_w / 2 + end_w; px++)
+                for(int py = h / 2 - 1; py < h / 2 - 1 + end_h; py++)
+                    screen[py * w + px] = 32;
+            print(w / 2 - strlen(gameover_text) / 2, h / 2, gameover_text);
+            print(w / 2 - strlen(score) / 2, h / 2 + 2, score);
+            print(w / 2 - strlen(press) / 2, h / 2 + 5, press);
         }
 
         COORD start_point = START;

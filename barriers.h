@@ -14,6 +14,7 @@ extern int pule_x;
 extern int pule_y;
 extern int shoot;
 extern int pule_move;
+extern int go;
 
 void barriers_setup(void){
     for(int i = 0; i < barriers; ++i){
@@ -29,7 +30,7 @@ void update_barriers(void){
         active += (active < barriers);
     }
     for(int i = 0; i < active; ++i){
-        barriers_x[i] -= speed;
+        barriers_x[i] -= (!go) ? speed : 0;
         if (barriers_x[i] < - 30){
             barriers_y[i] = rand()%((h-10)-6+1) + 6;
             barriers_x[i] = w;
