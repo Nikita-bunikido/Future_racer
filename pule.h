@@ -1,13 +1,17 @@
-#define pule_offset     2
-#define pule_speed      4
-#define restart_speed   40
+/* @Nikita_Bunikido 2021 */
 
-int pule_x;
-int pule_y;
-int shoot = 0;
-int pule_move = 0;
-int already_shoot;
+#define pule_offset     2   //pule offset
+#define pule_speed      4   //pule speed
+#define restart_speed   40  //restart speed
 
+/* PULE */
+int pule_x;         //pule x position
+int pule_y;         //pule y position
+int shoot = 0;      //shooting bool
+int pule_move = 0;  //pule moving bool
+int already_shoot;  //already_shoot bool
+
+/* pule_update() - updates pule state (every frame) */
 void pule_update(void){
     if (shoot){
         setup_pule_particles();
@@ -25,6 +29,7 @@ void pule_update(void){
     }
 }
 
+/* pule_draw() - draws pule on screen (every frame) */
 void pule_draw(void){
     if (shoot || pule_move)
         draw(p[PULE], pule_x, pule_y);

@@ -1,54 +1,77 @@
-#include <stdio.h>
-#include <windows.h>
-#include <math.h>
-#include <string.h>
-#include <time.h>
+/*****************************************
 
-#include "header.h"
-#include "particles.h"
-#include "pictures.h"
-#include "barriers.h"
-#include "pule.h"
+            FUTURE RACER
+    This is a game written
+    on C programming language.
+    It uses the command line to
+    output information in ascii
+    art.
+    Management:
 
-#define DEBUG //for test
+    [up, down (^v) arrows] - move
+    ESC - exit
+    ENTER - continue
+    SPACE - shoot
 
-#define START           {0, 0}
-#define speed           2
-#define score_default   "SCORE: "
-#define per_default     "| RESTARTING WEAPON..."
-#define gameover_text   "GAME OVER!"
-#define press           "Press [enter] to contune..."
+    Developed for OLC_CODEJAM_2021
+                    -@Nikita_Bunikido 2021
 
-#define end_w           30
-#define end_h           8
+*****************************************/
 
-#define shadow_offset   -3
+#include    <stdio.h>
+#include    <windows.h>
+#include    <math.h>
+#include    <string.h>
+#include    <time.h>
 
-char screen[w * h];
-char screen_collision[w * h];
-const int car_x = 10;
-int car_y = 10;
-int bl;
+#include    "header.h"
+#include    "particles.h"
+#include    "pictures.h"
+#include    "barriers.h"
+#include    "pule.h"
 
-int game = 1;
-int t;
-int restart_timer = 0;
-int can_shoot = 1;
-int score_count = 0;
+#define DEBUG                       /* macro for debug mode */
 
-int Key[5];
-int move = 0;
-int background_x = 0;
+#define START           {0, 0}      // start point do draw screen
+#define end_w           30          // game over message width
+#define end_h           8           // game over message height
+#define shadow_offset   -3          // car shadow offset
 
-char score[] = "SCORE: ";
+#define score_default   "SCORE: "                       // score output string
+#define per_default     "| RESTARTING WEAPON..."        // restarting message
+#define gameover_text   "GAME OVER!"                    // game over output string
+#define press           "Press [enter] to contune..."   // info output message
 
-int go = 0;
+/* OUTPUT */
+char screen[w * h];             //screen string (output string)
+char screen_collision[w * h];   //screen collision (array to collision detection info)
 
-int main(){
-    screen[w * h + 1] = '\0';
+/* CAR */
+const int car_x = 10;           //car x position
+int car_y = 10;                 //car y position
+int can_shoot = 1;              //can car shoot bool
+int move = 0;                   //car moving bool
+
+/* COUNTERS */
+int t;                          //global time
+int restart_timer = 0;          //weapon restart timer
+int score_count = 0;            //score counter
+
+/* INPUT */
+int Key[5];                     //Key states
+
+/* OTHER */
+int bl;                         //index to change barrier visibility (destroy)
+int game = 1;                   //main game loop control
+int background_x = 0;           //background x position
+char score[] = "SCORE: ";       //score string
+int go = 0;                     //gameover bool
+
+int main(int argc, char* argv[]){
     srand(time(NULL));
     emmiter_x = car_x + 3;
     emmiter_y = car_y + 6;
+    screen[w * h + 1] = '\0';
 
     setup_particles();
     barriers_setup();
@@ -65,9 +88,9 @@ int main(){
     #endif
 
     // Create Screen Buffer
-	HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-	SetConsoleActiveScreenBuffer(hConsole);
-	DWORD dwBytesWritten = 0;
+    HANDLE hConsole = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+    SetConsoleActiveScreenBuffer(hConsole);
+    DWORD dwBytesWritten = 0;
     screen[w * h] = 0;
 
     while(game){
@@ -109,19 +132,17 @@ int main(){
             shoot = 1;
             can_shoot = 0;
         }
-
         if (Key[4]){ //escape to exit
             game = !game;
         }
-
         if (Key[3] && go){ //restart
-            go  = t = active = shoot = pule_move = background_x = restart_timer = score_count = move = 0;
+            go  = t = active = shoot = pule_move = background_x = 
+            restart_timer = score_count = move = 0;
             car_y = 10;
             barriers_setup();
             setup_particles();
             setup_pule_particles();
         }
-
         if (!can_shoot){
             restart_timer++;
             if (restart_timer > restart_speed){
@@ -132,7 +153,6 @@ int main(){
 
         if (background_x <= -p[BACKGROUND]._x) //background move check
             background_x = -1;
-
         if ((bl = collision()) >= 0 && !already_shoot){ //shoot to barriers
             barriers_vis[bl] = 0;
             already_shoot = 1;

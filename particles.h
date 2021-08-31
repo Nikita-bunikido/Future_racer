@@ -1,7 +1,9 @@
+/* @Nikita_Bunikido 2021 */
+
 #include <stdlib.h>
 #include "header.h"
 
-#define particles_max       100
+#define particles_max       100     //max particles on screen
 
 extern char screen[];
 extern const int car_x;
@@ -11,16 +13,18 @@ extern int pule_move;
 extern int pule_x;
 extern int pule_y;
 
-char state[] = " `.,:;%%#@";
-int emmiter_x;
-int emmiter_y;
+char state[] = " `.,:;%%#@";        //one particle state array
+int emmiter_x;                      //emmiter x position
+int emmiter_y;                      //emmiter y position
 
-struct {
-    int _x;
-    int _y;
-    double life_time;
-} particles[particles_max], pule_particles[particles_max];
+/* PARTICLES */
+struct {                   //struct particles - for one particle
+    int _x;                //particle x position
+    int _y;                //particle y position
+    double life_time;      //particle current life time
+} particles[particles_max], pule_particles[particles_max];  //array of particles, and pule particles
 
+/* draw_particles() - drawing all particles into the screen (every frame) */
 void draw_particles(void){
     int i;
     for(i = 0; i < particles_max; ++i)
@@ -35,6 +39,7 @@ void draw_particles(void){
     }
 }
 
+/* setup_particles() - setup all particles before using (at start) */
 void setup_particles(void){
     for(int i = 0; i < particles_max; i++){
         particles[i]._x = emmiter_x;
@@ -46,6 +51,7 @@ void setup_particles(void){
     }
 }
 
+/* setup_pule_particles() - setup all particles specially for pule before using (at start) */
 void setup_pule_particles(void){
     for(int i = 0; i < particles_max; i++){
         pule_particles[i]._x = car_x + rand()%4;
@@ -54,6 +60,7 @@ void setup_pule_particles(void){
     }
 }
 
+/* update_particles() - updating particles states (every frame) */
 void update_particles(void){
     int i;
     for(i = 0; i < particles_max; i++){
