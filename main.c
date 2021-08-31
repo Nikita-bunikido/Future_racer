@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <math.h>
+#include <string.h>
 #include <time.h>
 
 #include "header.h"
@@ -11,23 +12,30 @@
 
 #define DEBUG //for test
 
-#define START   {0, 0}
-#define speed   2
+#define START           {0, 0}
+#define speed           2
+#define score_default   "SCORE: "
+#define per_default     "| RESTARTING WEAPON..."
 
 #define shadow_offset   -3
 
-char screen[w * h + 1];
+char screen[w * h];
+char screen_collision[w * h];
 const int car_x = 10;
 int car_y = 10;
 int bl;
 
-int game = 1, t;
+int game = 1, t, restart_timer = 0, can_shoot = 1;
 
 int Key[4];
 int move = 0;
 int background_x = 0;
 
+char score[] = "SCORE: ";
+
 int main(){
+    screen[w * h + 1] = '\0';
+    srand(time(NULL));
     emmiter_x = car_x + 3;
     emmiter_y = car_y + 6;
 
@@ -35,7 +43,8 @@ int main(){
     barriers_setup();
 
     char *ens[P] = {"res\\car_1.txt", "res\\car_2.txt", "res\\car_3.txt", 
-    "res\\background.txt", "res\\stop.txt", "res\\robot.txt", "res\\pule.txt"};
+    "res\\background.txt", "res\\stop.txt", "res\\robot.txt", "res\\lamp.txt", 
+    "res\\pule.txt"};
 
     #ifdef DEBUG
     if (!open(ens)){
@@ -51,8 +60,8 @@ int main(){
     screen[w * h] = 0;
 
     while(game){
-        srand(time(NULL)+t);
         memset(screen, 32, w * h * sizeof(char));
+        memset(screen_collision, 32, w * h * sizeof(char));
         
         // GAME TICK =======================================
         //Car moving
@@ -83,14 +92,23 @@ int main(){
             car_y-= car_y > 10; //Collision detection with top
             move = 1;
         }
-        if (Key[2]) { //Shooting
+        if (Key[2] && can_shoot) { //Shooting
             shoot = 1;
+            can_shoot = 0;
+        }
+
+        if (!can_shoot){
+            restart_timer++;
+            if (restart_timer > restart_speed){
+                restart_timer = 0;
+                can_shoot = 1;
+            }
         }
 
         if (background_x <= -p[BACKGROUND]._x) //background move check
             background_x = -1;
 
-        if ((bl = collision()) >= 0 && !already_shoot){
+        if ((bl = collision()) >= 0 && !already_shoot){ //shoot to barriers
             barriers_vis[bl] = 0;
             already_shoot = 1;
         }
@@ -136,6 +154,20 @@ int main(){
         else
             draw(p[CAR_MOVE], car_x, car_y + 1);
 
+        strcpy(score, score_default);
+        char sc[50];
+        itoa(t / 10, sc, 10);
+        strcat(score, sc);
+        print(1, 0, score);
+
+        if (!can_shoot)
+            print(11, 0, per_default);
+
+
+        if (game_over()){
+            Sleep(5000);
+            exit(0);
+        }
 
         COORD start_point = START;
         WriteConsoleOutputCharacter(hConsole, screen, w * h, start_point, &dwBytesWritten);

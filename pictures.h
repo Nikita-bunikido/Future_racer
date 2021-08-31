@@ -1,6 +1,5 @@
 #include "header.h"
 
-#define P       7
 #define MAX     100000
 
 struct pict {
@@ -16,8 +15,11 @@ enum ps {
     BACKGROUND,
     BARRIER,
     ROBOT,
+    LAMP,
     PULE
 };
+
+extern char screen_collision[];
 
 int open(char *ens[]){
     FILE *f;
@@ -53,4 +55,17 @@ void draw(struct pict a, int o_x, int o_y){
         for(int py = 0; py < a._y; py++)
             if (a.picture[py * a._x + px] != 'a' && (px + o_x) < w && (py + o_y) < h && (o_x + px) >= 0 && (o_y + py) > 0)
                 screen[(py + o_y) * w + (px + o_x)] = a.picture[py * a._x + px];
+}
+
+void draw_col(struct pict a, int o_x, int o_y){
+    for(int px = 0; px < a._x; px++)
+        for(int py = 0; py < a._y; py++)
+            if (a.picture[py * a._x + px] != 'a' && (px + o_x) < w && (py + o_y) < h && (o_x + px) >= 0 && (o_y + py) > 0)
+                screen_collision[(py + o_y) * w + (px + o_x)] = '@';
+}
+
+void print(int x, int y, char* s){
+    int i;
+    for(i = 0; s[i] != '\0'; i++)
+        screen[y * w + x + i] = s[i];
 }
